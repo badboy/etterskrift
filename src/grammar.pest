@@ -1,0 +1,14 @@
+program = {
+  SOI ~
+  (item | block)* ~
+  EOI
+}
+
+char = _{ ASCII_ALPHA | "." | "_" | "-" }
+number = @{ ASCII_DIGIT+ }
+ident = @{ char+ }
+key = ${ "/" ~ ident }
+item = { (ident | key | number) }
+block = { "{" ~ item+ ~ "}" }
+
+WHITESPACE = _{ " " | "\n"}
