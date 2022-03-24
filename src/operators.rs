@@ -26,7 +26,7 @@ macro_rules! operator {
 }
 
 pub type OperatorFn = dyn Fn(&mut State) -> Result<()> + Send + Sync;
-pub type OperatorMap = HashMap<String, Box<OperatorFn>>;
+pub type OperatorMap = HashMap<&'static str, Box<OperatorFn>>;
 
 pub fn operators() -> &'static OperatorMap {
     static OPERATORS: OnceCell<OperatorMap> = OnceCell::new();
@@ -34,51 +34,51 @@ pub fn operators() -> &'static OperatorMap {
         let mut m = HashMap::new();
 
         // math
-        m.insert("add".into(), operator!(add, 2));
-        m.insert("sub".into(), operator!(sub, 2));
-        m.insert("mul".into(), operator!(mul, 2));
-        m.insert("div".into(), operator!(div, 2));
-        m.insert("neg".into(), operator!(neg, 1));
-        m.insert("sqrt".into(), operator!(sqrt, 1));
-        m.insert("rand".into(), operator!(rand, 0));
+        m.insert("add", operator!(add, 2));
+        m.insert("sub", operator!(sub, 2));
+        m.insert("mul", operator!(mul, 2));
+        m.insert("div", operator!(div, 2));
+        m.insert("neg", operator!(neg, 1));
+        m.insert("sqrt", operator!(sqrt, 1));
+        m.insert("rand", operator!(rand, 0));
 
         // stack
-        m.insert("exch".into(), operator!(exch, 2));
-        m.insert("dup".into(), operator!(dup, 1));
-        m.insert("pop".into(), operator!(pop, 1));
-        m.insert("clear".into(), operator!(clear, 0));
-        m.insert("pstack".into(), operator!(pstack, 0));
-        m.insert("count".into(), operator!(count, 0));
-        m.insert("pdict".into(), operator!(pdict, 0));
+        m.insert("exch", operator!(exch, 2));
+        m.insert("dup", operator!(dup, 1));
+        m.insert("pop", operator!(pop, 1));
+        m.insert("clear", operator!(clear, 0));
+        m.insert("pstack", operator!(pstack, 0));
+        m.insert("count", operator!(count, 0));
+        m.insert("pdict", operator!(pdict, 0));
 
         // def
-        m.insert("def".into(), operator!(def, 2));
+        m.insert("def", operator!(def, 2));
 
         // control
-        m.insert("exec".into(), operator!(exec, 1));
-        m.insert("repeat".into(), operator!(repeat, 2));
-        m.insert("for".into(), operator!(for_loop, 4));
-        m.insert("if".into(), operator!(if_cond, 2));
-        m.insert("ifelse".into(), operator!(ifelse_cond, 3));
+        m.insert("exec", operator!(exec, 1));
+        m.insert("repeat", operator!(repeat, 2));
+        m.insert("for", operator!(for_loop, 4));
+        m.insert("if", operator!(if_cond, 2));
+        m.insert("ifelse", operator!(ifelse_cond, 3));
 
         // relational
-        m.insert("true".into(), operator!(bool_true, 0));
-        m.insert("false".into(), operator!(bool_false, 0));
-        m.insert("eq".into(), operator!(eq, 2));
-        m.insert("ne".into(), operator!(ne, 2));
+        m.insert("true", operator!(bool_true, 0));
+        m.insert("false", operator!(bool_false, 0));
+        m.insert("eq", operator!(eq, 2));
+        m.insert("ne", operator!(ne, 2));
 
         // array
-        m.insert("]".into(), operator!(array_close, 1));
-        m.insert("length".into(), operator!(array_length, 1));
-        m.insert("forall".into(), operator!(array_forall, 2));
+        m.insert("]", operator!(array_close, 1));
+        m.insert("length", operator!(array_length, 1));
+        m.insert("forall", operator!(array_forall, 2));
 
         // dict
-        m.insert("dict".into(), operator!(dict_new, 1));
-        m.insert("begin".into(), operator!(dict_begin, 1));
-        m.insert("end".into(), operator!(dict_end, 0));
+        m.insert("dict", operator!(dict_new, 1));
+        m.insert("begin", operator!(dict_begin, 1));
+        m.insert("end", operator!(dict_end, 0));
 
         // type
-        m.insert("cvi".into(), operator!(cvi, 1));
+        m.insert("cvi", operator!(cvi, 1));
 
         m
     })
