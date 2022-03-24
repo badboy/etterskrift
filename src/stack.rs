@@ -14,7 +14,7 @@ pub enum Item {
     //Dict(()),
     Key(String),
     Block(String),
-    ArrayOpen,
+    Mark,
     Array(Vec<Item>),
 }
 
