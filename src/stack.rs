@@ -1,4 +1,5 @@
 use color_eyre::eyre::{Report, Result};
+use std::collections::HashMap;
 
 macro_rules! msg {
     ($($rest:tt)+) => {
@@ -11,7 +12,7 @@ pub enum Item {
     Number(i32),
     Float(f32),
     Bool(bool),
-    //Dict(()),
+    Dict(HashMap<String, Item>),
     Key(String),
     Block(String),
     ArrayOpen,
@@ -66,6 +67,14 @@ impl Item {
             panic!("{:?} not a bool", self);
         }
     }
+
+    pub fn into_dict(self) -> Result<HashMap<String, Item>> {
+        if let Item::Dict(d) = self {
+            Ok(d)
+        } else {
+            panic!("{:?} not a dict", self);
+        }
+    }
 }
 
 impl From<i32> for Item {
@@ -92,20 +101,26 @@ impl From<bool> for Item {
     }
 }
 
-pub struct Stack {
-    pub(crate) inner: Vec<Item>,
+impl From<HashMap<String, Item>> for Item {
+    fn from(val: HashMap<String, Item>) -> Self {
+        Item::Dict(val)
+    }
 }
 
-impl Stack {
+pub struct Stack<T> {
+    pub(crate) inner: Vec<T>,
+}
+
+impl<T> Stack<T> {
     pub fn new() -> Self {
         Stack { inner: vec![] }
     }
 
-    pub fn push(&mut self, val: Item) {
+    pub fn push(&mut self, val: T) {
         self.inner.push(val);
     }
 
-    pub fn pop(&mut self) -> Result<Item> {
+    pub fn pop(&mut self) -> Result<T> {
         self.inner
             .pop()
             .ok_or_else(|| Report::msg("/stackunderflow"))

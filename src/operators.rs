@@ -1,9 +1,10 @@
 use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::hash::{BuildHasher, Hasher};
+use std::mem;
 
-use once_cell::sync::OnceCell;
 use color_eyre::eyre::{Report, Result};
+use once_cell::sync::OnceCell;
 
 use super::stack::Item;
 use super::State;
@@ -70,6 +71,11 @@ pub fn operators() -> &'static OperatorMap {
         m.insert("]".into(), operator!(array_close, 1));
         m.insert("length".into(), operator!(array_length, 1));
         m.insert("forall".into(), operator!(array_forall, 2));
+
+        // dict
+        m.insert("dict".into(), operator!(dict_new, 1));
+        m.insert("begin".into(), operator!(dict_begin, 1));
+        m.insert("end".into(), operator!(dict_end, 0));
 
         m
     })
@@ -302,5 +308,25 @@ fn ne(state: &mut State) -> Result<()> {
     let b = state.operand_stack.pop()?;
 
     state.operand_stack.push((a != b).into());
+    Ok(())
+}
+
+fn dict_new(state: &mut State) -> Result<()> {
+    let n = state.operand_stack.pop()?.as_int()?;
+    let dict = HashMap::with_capacity(n as usize);
+    state.operand_stack.push(dict.into());
+    Ok(())
+}
+
+fn dict_begin(state: &mut State) -> Result<()> {
+    let dict = state.operand_stack.pop()?.into_dict()?;
+    let olddict = mem::replace(&mut state.dictionary, dict);
+    state.dict_stack.push(olddict);
+    Ok(())
+}
+
+fn dict_end(state: &mut State) -> Result<()> {
+    let newdict = state.dict_stack.pop()?;
+    let _olddict = mem::replace(&mut state.dictionary, newdict);
     Ok(())
 }

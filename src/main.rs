@@ -17,16 +17,47 @@ use operators::OperatorMap;
 use stack::{Item, Stack};
 
 pub struct State {
-    operand_stack: Stack,
+    operand_stack: Stack<Item>,
     dictionary: HashMap<String, Item>,
+    dict_stack: Stack<HashMap<String, Item>>,
+}
+
+impl State {
+    fn contains_key(&self, key: &str) -> bool {
+        if self.dictionary.contains_key(key) {
+            return true;
+        }
+
+        for dict in self.dict_stack.inner.iter().rev() {
+            if dict.contains_key(key) {
+                return true;
+            }
+        }
+
+        false
+    }
+
+    fn get(&self, key: &str) -> Option<&Item> {
+        if let Some(item) = self.dictionary.get(key) {
+            return Some(item);
+        }
+
+        for dict in self.dict_stack.inner.iter().rev() {
+            if let Some(item) = dict.get(key) {
+                return Some(item);
+            }
+        }
+
+        None
+    }
 }
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    let ops = operators::operators();
     let mut state = State {
         operand_stack: Stack::new(),
         dictionary: HashMap::new(),
+        dict_stack: Stack::new(),
     };
 
     let mut rl = Editor::<()>::new();
@@ -42,7 +73,7 @@ fn main() -> Result<()> {
                 continue;
             }
             Ok(line) => {
-                if let Err(e) = execute(&line, &mut state, &ops) {
+                if let Err(e) = execute(&line, &mut state, operators::operators()) {
                     eprintln!("Error: {}", e);
                 }
             }
@@ -78,8 +109,8 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                         state.operand_stack.push(key.to_string().into());
                     }
                     Rule::ident => match inner.as_str() {
-                        key if state.dictionary.contains_key(key) => {
-                            let item = state.dictionary.get(key).unwrap().clone();
+                        key if state.contains_key(key) => {
+                            let item = state.get(key).unwrap().clone();
                             if let Item::Block(block) = item {
                                 execute(&block, state, operators)?
                             } else {
