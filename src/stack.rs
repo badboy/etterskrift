@@ -15,7 +15,7 @@ pub enum Item {
     Dict(HashMap<String, Item>),
     Key(String),
     Block(String),
-    ArrayOpen,
+    Mark,
     Array(Vec<Item>),
 }
 

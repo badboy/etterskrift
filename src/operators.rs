@@ -252,7 +252,7 @@ fn array_close(state: &mut State) -> Result<()> {
     let found = (&stack.inner)
         .iter()
         .rev()
-        .position(|item| matches!(item, Item::ArrayOpen));
+        .position(|item| matches!(item, Item::Mark));
 
     if found.is_none() {
         return Err(Report::msg("/unmatchedmark in --]--"));
