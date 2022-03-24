@@ -2,6 +2,7 @@
 pub enum Item {
     Number(i32),
     Float(f32),
+    Bool(bool),
     //Dict(()),
     Key(String),
     Block(String),
@@ -49,6 +50,14 @@ impl Item {
             panic!("{:?} not an array", self);
         }
     }
+
+    pub fn as_bool(&self) -> bool {
+        if let &Item::Bool(b) = self {
+            b
+        } else {
+            panic!("{:?} not a bool", self);
+        }
+    }
 }
 
 impl From<i32> for Item {
@@ -66,6 +75,12 @@ impl From<f32> for Item {
 impl From<String> for Item {
     fn from(val: String) -> Self {
         Item::Key(val)
+    }
+}
+
+impl From<bool> for Item {
+    fn from(val: bool) -> Self {
+        Item::Bool(val)
     }
 }
 

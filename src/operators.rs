@@ -51,15 +51,21 @@ pub fn operators() -> OperatorMap {
     // def
     m.insert("def".into(), operator!(def, 2));
 
-    // procs
+    // control
     m.insert("exec".into(), operator!(exec, 1));
     m.insert("repeat".into(), operator!(repeat, 2));
     m.insert("for".into(), operator!(for_loop, 4));
+    m.insert("if".into(), operator!(if_cond, 2));
+    m.insert("ifelse".into(), operator!(ifelse_cond, 3));
 
     // array
     m.insert("]".into(), operator!(array_close, 1));
     m.insert("length".into(), operator!(array_length, 1));
     m.insert("forall".into(), operator!(array_forall, 2));
+
+    // bool
+    m.insert("true".into(), operator!(bool_true, 0));
+    m.insert("false".into(), operator!(bool_false, 0));
     m
 }
 
@@ -192,6 +198,28 @@ fn for_loop(state: &mut State) {
     }
 }
 
+fn if_cond(state: &mut State) {
+    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
+    let cond = state.operand_stack.pop().unwrap().as_bool();
+
+    if cond {
+        let map = operators();
+        super::execute(&proc, state, &map).expect("can't run block");
+    }
+}
+fn ifelse_cond(state: &mut State) {
+    let proc2 = state.operand_stack.pop().unwrap().as_block().to_string();
+    let proc1 = state.operand_stack.pop().unwrap().as_block().to_string();
+    let cond = state.operand_stack.pop().unwrap().as_bool();
+
+    let map = operators();
+    if cond {
+        super::execute(&proc1, state, &map).expect("can't run block");
+    } else {
+        super::execute(&proc2, state, &map).expect("can't run block");
+    }
+}
+
 fn array_close(state: &mut State) {
     let stack = &mut state.operand_stack;
     let found = (&stack.inner)
@@ -227,4 +255,12 @@ fn array_forall(state: &mut State) {
         state.operand_stack.push(elem);
         super::execute(&proc, state, &map).expect("can't run block");
     }
+}
+
+fn bool_true(state: &mut State) {
+    state.operand_stack.push(true.into());
+}
+
+fn bool_false(state: &mut State) {
+    state.operand_stack.push(false.into());
 }
