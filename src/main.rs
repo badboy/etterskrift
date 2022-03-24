@@ -26,6 +26,12 @@ pub struct State {
     block_marks: usize,
 }
 
+impl Default for State {
+    fn default() -> State {
+        State::new()
+    }
+}
+
 impl State {
     pub fn new() -> Self {
         Self {
@@ -89,7 +95,7 @@ fn main() -> Result<()> {
 
     let mut rl = Editor::<()>::new();
     loop {
-        let prompt = if state.operand_stack.len() == 0 {
+        let prompt = if state.operand_stack.is_empty() {
             "ES>".to_string()
         } else {
             format!("ES<{}>", state.operand_stack.len())
