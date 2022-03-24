@@ -138,7 +138,7 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                         }
                     },
                     Rule::ops => match inner.as_str() {
-                        "[" => state.operand_stack.push(Item::ArrayOpen),
+                        "[" => state.operand_stack.push(Item::Mark),
                         "]" => {
                             let f = operators.get("]").unwrap();
                             f(state)?;
