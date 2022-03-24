@@ -1,3 +1,11 @@
+use color_eyre::eyre::{Report, Result};
+
+macro_rules! msg {
+    ($($rest:tt)+) => {
+        Err(Report::msg(format!($($rest)+)))
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Item {
     Number(i32),
@@ -11,49 +19,49 @@ pub enum Item {
 }
 
 impl Item {
-    pub fn as_int(&self) -> i32 {
+    pub fn as_int(&self) -> Result<i32> {
         if let &Item::Number(i) = self {
-            i
+            Ok(i)
         } else {
-            panic!("{:?} not an int", self);
+            msg!("{:?} not an int", self)
         }
     }
 
-    pub fn as_float(&self) -> f32 {
+    pub fn as_float(&self) -> Result<f32> {
         match *self {
-            Item::Number(i) => i as f32,
-            Item::Float(f) => f,
-            _ => panic!("{:?} not a float", self),
+            Item::Number(i) => Ok(i as f32),
+            Item::Float(f) => Ok(f),
+            _ => msg!("{:?} not a float", self),
         }
     }
 
-    pub fn as_key(&self) -> &str {
+    pub fn as_key(&self) -> Result<&str> {
         if let Item::Key(s) = self {
-            s
+            Ok(s)
         } else {
-            panic!("{:?} not a key", self);
+            msg!("{:?} not a key", self)
         }
     }
 
-    pub fn as_block(&self) -> &str {
+    pub fn as_block(&self) -> Result<&str> {
         if let Item::Block(s) = self {
-            s
+            Ok(s)
         } else {
-            panic!("{:?} not a block", self);
+            msg!("{:?} not a block", self)
         }
     }
 
-    pub fn as_array(&self) -> &[Item] {
+    pub fn as_array(&self) -> Result<&[Item]> {
         if let Item::Array(a) = self {
-            a
+            Ok(a)
         } else {
             panic!("{:?} not an array", self);
         }
     }
 
-    pub fn as_bool(&self) -> bool {
+    pub fn as_bool(&self) -> Result<bool> {
         if let &Item::Bool(b) = self {
-            b
+            Ok(b)
         } else {
             panic!("{:?} not a bool", self);
         }
@@ -97,8 +105,10 @@ impl Stack {
         self.inner.push(val);
     }
 
-    pub fn pop(&mut self) -> Option<Item> {
-        self.inner.pop()
+    pub fn pop(&mut self) -> Result<Item> {
+        self.inner
+            .pop()
+            .ok_or_else(|| Report::msg("/stackunderflow"))
     }
 
     pub fn len(&self) -> usize {

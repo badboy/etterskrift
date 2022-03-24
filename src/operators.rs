@@ -18,8 +18,7 @@ macro_rules! operator {
                 )));
             }
 
-            $name(state);
-            Ok(())
+            $name(state)
         }) as Box<_>
     }};
 }
@@ -72,158 +71,179 @@ pub fn operators() -> OperatorMap {
     m
 }
 
-fn add(state: &mut State) {
+fn add(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let res = stack.pop().unwrap().as_int() + stack.pop().unwrap().as_int();
+    let res = stack.pop()?.as_int()? + stack.pop()?.as_int()?;
     stack.push(res.into());
+
+    Ok(())
 }
 
-fn sub(state: &mut State) {
+fn sub(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let n2 = stack.pop().unwrap().as_int();
-    let n1 = stack.pop().unwrap().as_int();
+    let n2 = stack.pop()?.as_int()?;
+    let n1 = stack.pop()?.as_int()?;
     stack.push((n1 - n2).into());
+    Ok(())
 }
 
-fn mul(state: &mut State) {
+fn mul(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let res = stack.pop().unwrap().as_int() * stack.pop().unwrap().as_int();
+    let res = stack.pop()?.as_int()? * stack.pop()?.as_int()?;
     stack.push(res.into());
+    Ok(())
 }
 
-fn div(state: &mut State) {
+fn div(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let n2 = stack.pop().unwrap().as_float();
-    let n1 = stack.pop().unwrap().as_float();
+    let n2 = stack.pop()?.as_float()?;
+    let n1 = stack.pop()?.as_float()?;
     stack.push((n1 / n2).into());
+    Ok(())
 }
 
-fn neg(state: &mut State) {
+fn neg(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let n = stack.pop().unwrap().as_int();
+    let n = stack.pop()?.as_int()?;
     stack.push((-n).into());
+    Ok(())
 }
 
-fn sqrt(state: &mut State) {
+fn sqrt(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let n = stack.pop().unwrap().as_float();
+    let n = stack.pop()?.as_float()?;
     stack.push(n.sqrt().into());
+    Ok(())
 }
 
-fn rand(state: &mut State) {
+fn rand(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
     let random_value = RandomState::new().build_hasher().finish() as i32;
     stack.push(random_value.into());
+    Ok(())
 }
 
-fn exch(state: &mut State) {
+fn exch(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
     let a = stack.pop().unwrap();
     let b = stack.pop().unwrap();
     stack.push(a);
     stack.push(b);
+    Ok(())
 }
 
-fn dup(state: &mut State) {
+fn dup(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let a = stack.pop().unwrap();
+    let a = stack.pop()?;
     stack.push(a.clone());
     stack.push(a);
+    Ok(())
 }
 
-fn pop(state: &mut State) {
+fn pop(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
     let _a = stack.pop();
+    Ok(())
 }
 
-fn clear(state: &mut State) {
+fn clear(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
     stack.inner.clear();
+    Ok(())
 }
 
-fn pstack(state: &mut State) {
+fn pstack(state: &mut State) -> Result<()> {
     let stack = &state.operand_stack.inner;
     for x in stack.iter().rev() {
         println!("{:?}", x);
     }
+    Ok(())
 }
 
-fn count(state: &mut State) {
+fn count(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
     let len = stack.len();
     stack.push((len as i32).into());
+    Ok(())
 }
 
-fn pdict(state: &mut State) {
+fn pdict(state: &mut State) -> Result<()> {
     let dict = &state.dictionary;
     for (k, v) in dict {
         println!("{}: {:?}", k, v);
     }
+    Ok(())
 }
 
-fn def(state: &mut State) {
-    let item = state.operand_stack.pop().unwrap();
-    let name = state.operand_stack.pop().unwrap();
+fn def(state: &mut State) -> Result<()> {
+    let item = state.operand_stack.pop()?;
+    let name = state.operand_stack.pop()?;
 
-    state.dictionary.insert(name.as_key().to_string(), item);
+    state.dictionary.insert(name.as_key()?.to_string(), item);
+    Ok(())
 }
 
-fn exec(state: &mut State) {
-    let block = state.operand_stack.pop().unwrap();
-    let code = block.as_block();
+fn exec(state: &mut State) -> Result<()> {
+    let code = state.operand_stack.pop()?.as_block()?.to_string();
 
     // FIXME: need operators.
     let map = HashMap::new();
-    super::execute(code, state, &map).expect("can't run block");
+    super::execute(&code, state, &map)?;
+    Ok(())
 }
 
-fn repeat(state: &mut State) {
-    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
-    let n = state.operand_stack.pop().unwrap().as_int();
+fn repeat(state: &mut State) -> Result<()> {
+    let proc = state.operand_stack.pop()?.as_block()?.to_string();
+    let n = state.operand_stack.pop()?.as_int()?;
 
     let map = operators();
     for i in 0..n {
         state.operand_stack.push(i.into());
-        super::execute(&proc, state, &map).expect("can't run block");
+        super::execute(&proc, state, &map)?;
     }
+    Ok(())
 }
 
-fn for_loop(state: &mut State) {
-    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
-    let limit = state.operand_stack.pop().unwrap().as_int();
-    let inc = state.operand_stack.pop().unwrap().as_int();
-    let init = state.operand_stack.pop().unwrap().as_int();
+fn for_loop(state: &mut State) -> Result<()> {
+    let proc = state.operand_stack.pop()?.as_block()?.to_string();
+    let limit = state.operand_stack.pop()?.as_int()?;
+    let inc = state.operand_stack.pop()?.as_int()?;
+    let init = state.operand_stack.pop()?.as_int()?;
 
     let map = operators();
     for i in (init..=limit).step_by(inc as usize) {
         state.operand_stack.push(i.into());
-        super::execute(&proc, state, &map).expect("can't run block");
+        super::execute(&proc, state, &map)?;
     }
+    Ok(())
 }
 
-fn if_cond(state: &mut State) {
-    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
-    let cond = state.operand_stack.pop().unwrap().as_bool();
+fn if_cond(state: &mut State) -> Result<()> {
+    let proc = state.operand_stack.pop()?.as_block()?.to_string();
+    let cond = state.operand_stack.pop()?.as_bool()?;
 
     if cond {
         let map = operators();
-        super::execute(&proc, state, &map).expect("can't run block");
+        super::execute(&proc, state, &map)?;
     }
+    Ok(())
 }
-fn ifelse_cond(state: &mut State) {
-    let proc2 = state.operand_stack.pop().unwrap().as_block().to_string();
-    let proc1 = state.operand_stack.pop().unwrap().as_block().to_string();
-    let cond = state.operand_stack.pop().unwrap().as_bool();
+
+fn ifelse_cond(state: &mut State) -> Result<()> {
+    let proc2 = state.operand_stack.pop()?.as_block()?.to_string();
+    let proc1 = state.operand_stack.pop()?.as_block()?.to_string();
+    let cond = state.operand_stack.pop()?.as_bool()?;
 
     let map = operators();
     if cond {
-        super::execute(&proc1, state, &map).expect("can't run block");
+        super::execute(&proc1, state, &map)?;
     } else {
-        super::execute(&proc2, state, &map).expect("can't run block");
+        super::execute(&proc2, state, &map)?;
     }
+    Ok(())
 }
 
-fn array_close(state: &mut State) {
+fn array_close(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
     let found = (&stack.inner)
         .iter()
@@ -231,53 +251,59 @@ fn array_close(state: &mut State) {
         .position(|item| matches!(item, Item::ArrayOpen));
 
     if found.is_none() {
-        eprintln!("Error: /unmatchedmark in --]--");
-        return;
+        return Err(Report::msg("/unmatchedmark in --]--"));
     }
 
     let pos = stack.len() - found.unwrap() - 1;
     let mut items: Vec<_> = stack.inner.drain(pos..).collect();
     items.remove(0); // ArrayOpen
     stack.push(Item::Array(items));
+    Ok(())
 }
 
-fn array_length(state: &mut State) {
-    let item = state.operand_stack.pop().unwrap();
-    let array = item.as_array();
+fn array_length(state: &mut State) -> Result<()> {
+    let item = state.operand_stack.pop()?;
+    let array = item.as_array()?;
     let len = array.len() as i32;
     let stack = &mut state.operand_stack;
     stack.push(len.into());
+    Ok(())
 }
 
-fn array_forall(state: &mut State) {
-    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
-    let array = state.operand_stack.pop().unwrap().as_array().to_vec();
+fn array_forall(state: &mut State) -> Result<()> {
+    let proc = state.operand_stack.pop()?.as_block()?.to_string();
+    let array = state.operand_stack.pop()?.as_array()?.to_vec();
 
     let map = operators();
     for elem in array.into_iter() {
         state.operand_stack.push(elem);
         super::execute(&proc, state, &map).expect("can't run block");
     }
+    Ok(())
 }
 
-fn bool_true(state: &mut State) {
+fn bool_true(state: &mut State) -> Result<()> {
     state.operand_stack.push(true.into());
+    Ok(())
 }
 
-fn bool_false(state: &mut State) {
+fn bool_false(state: &mut State) -> Result<()> {
     state.operand_stack.push(false.into());
+    Ok(())
 }
 
-fn eq(state: &mut State) {
-    let a = state.operand_stack.pop().unwrap();
-    let b = state.operand_stack.pop().unwrap();
+fn eq(state: &mut State) -> Result<()> {
+    let a = state.operand_stack.pop()?;
+    let b = state.operand_stack.pop()?;
 
     state.operand_stack.push((a == b).into());
+    Ok(())
 }
 
-fn ne(state: &mut State) {
-    let a = state.operand_stack.pop().unwrap();
-    let b = state.operand_stack.pop().unwrap();
+fn ne(state: &mut State) -> Result<()> {
+    let a = state.operand_stack.pop()?;
+    let b = state.operand_stack.pop()?;
 
     state.operand_stack.push((a != b).into());
+    Ok(())
 }
