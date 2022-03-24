@@ -1,10 +1,11 @@
+use std::collections::HashMap;
+use std::{env, fs};
+
 use color_eyre::eyre::{Report, Result};
 use pest::Parser;
 use pest_derive::Parser;
 use rustyline::error::ReadlineError;
 use rustyline::Editor;
-
-use std::collections::HashMap;
 
 #[derive(Parser)]
 #[grammar = "grammar.pest"]
@@ -59,6 +60,17 @@ fn main() -> Result<()> {
         dictionary: HashMap::new(),
         dict_stack: Stack::new(),
     };
+
+    let args = env::args().skip(1).collect::<Vec<_>>();
+    if args.len() == 1 {
+        let code = fs::read_to_string(&args[0])?;
+
+        if let Err(e) = execute(&code, &mut state, operators::operators()) {
+            eprintln!("Error: {}", e);
+            std::process::exit(1);
+        }
+        std::process::exit(0);
+    }
 
     let mut rl = Editor::<()>::new();
     loop {
