@@ -58,14 +58,17 @@ pub fn operators() -> OperatorMap {
     m.insert("if".into(), operator!(if_cond, 2));
     m.insert("ifelse".into(), operator!(ifelse_cond, 3));
 
+    // relational
+    m.insert("true".into(), operator!(bool_true, 0));
+    m.insert("false".into(), operator!(bool_false, 0));
+    m.insert("eq".into(), operator!(eq, 2));
+    m.insert("ne".into(), operator!(ne, 2));
+
     // array
     m.insert("]".into(), operator!(array_close, 1));
     m.insert("length".into(), operator!(array_length, 1));
     m.insert("forall".into(), operator!(array_forall, 2));
 
-    // bool
-    m.insert("true".into(), operator!(bool_true, 0));
-    m.insert("false".into(), operator!(bool_false, 0));
     m
 }
 
@@ -263,4 +266,18 @@ fn bool_true(state: &mut State) {
 
 fn bool_false(state: &mut State) {
     state.operand_stack.push(false.into());
+}
+
+fn eq(state: &mut State) {
+    let a = state.operand_stack.pop().unwrap();
+    let b = state.operand_stack.pop().unwrap();
+
+    state.operand_stack.push((a == b).into());
+}
+
+fn ne(state: &mut State) {
+    let a = state.operand_stack.pop().unwrap();
+    let b = state.operand_stack.pop().unwrap();
+
+    state.operand_stack.push((a != b).into());
 }
