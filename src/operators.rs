@@ -77,6 +77,9 @@ pub fn operators() -> &'static OperatorMap {
         m.insert("begin".into(), operator!(dict_begin, 1));
         m.insert("end".into(), operator!(dict_end, 0));
 
+        // type
+        m.insert("cvi".into(), operator!(cvi, 1));
+
         m
     })
 }
@@ -330,6 +333,16 @@ fn dict_end(state: &mut State) -> Result<()> {
     Ok(())
 }
 
+fn cvi(state: &mut State) -> Result<()> {
+    let elem = state.operand_stack.pop()?;
+    if let Ok(i) = elem.as_int() {
+        state.operand_stack.push(i.into());
+    } else if let Ok(i) = elem.as_float() {
+        state.operand_stack.push((i as i32).into());
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -417,7 +430,6 @@ mod test {
         assert_eq!(state, expected);
     }
 
-
     #[test]
     fn exch_exchanges_the_two_top_most_elements() {
         let mut state = State::new();
@@ -429,6 +441,32 @@ mod test {
         let mut expected = State::new();
         expected.operand_stack.push(2.into());
         expected.operand_stack.push(1.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn convert_int_to_int() {
+        let mut state = State::new();
+        state.operand_stack.push(2.into());
+
+        cvi(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(2.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn convert_float_to_int() {
+        let mut state = State::new();
+        state.operand_stack.push(2.9.into());
+
+        cvi(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(2.into());
 
         assert_eq!(state, expected);
     }
