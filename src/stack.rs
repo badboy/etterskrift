@@ -5,6 +5,7 @@ pub enum Item {
     //Dict(()),
     //Array(Vec<i32>),
     Key(String),
+    Block(String),
 }
 
 impl Item {
@@ -29,6 +30,14 @@ impl Item {
             s
         } else {
             panic!("{:?} not a key", self);
+        }
+    }
+
+    pub fn as_block(&self) -> &str {
+        if let Item::Block(s) = self {
+            s
+        } else {
+            panic!("{:?} not a block", self);
         }
     }
 }

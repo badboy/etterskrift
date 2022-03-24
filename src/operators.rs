@@ -48,6 +48,7 @@ pub fn operators() -> OperatorMap {
 
     // def
     m.insert("def".into(), operator!(def, 2));
+    m.insert("exec".into(), operator!(exec, 1));
     m
 }
 
@@ -140,4 +141,13 @@ fn def(state: &mut State) {
     let name = state.operand_stack.pop().unwrap();
 
     state.dictionary.insert(name.as_key().to_string(), item);
+}
+
+fn exec(state: &mut State) {
+    let block = state.operand_stack.pop().unwrap();
+    let code = block.as_block();
+
+    // FIXME: need operators.
+    let map = HashMap::new();
+    super::execute(code, state, &map).expect("can't run block");
 }

@@ -1,4 +1,4 @@
-use color_eyre::eyre::Result;
+use color_eyre::eyre::{Result, Report};
 use pest::Parser;
 use pest_derive::Parser;
 use rustyline::error::ReadlineError;
@@ -78,22 +78,30 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                         state.operand_stack.push(key.to_string().into());
                     }
                     Rule::ident => match inner.as_str() {
+                        key if state.dictionary.contains_key(key) => {
+                            let item = state.dictionary.get(key).unwrap().clone();
+                            if let Item::Block(block) = item {
+                                execute(&block, state, operators)?
+                            } else {
+                                state.operand_stack.push(item);
+                            }
+                        }
                         op if operators.contains_key(op) => {
                             let f = operators.get(op).unwrap();
                             f(state)?;
                         }
-                        key if state.dictionary.contains_key(key) => {
-                            let item = state.dictionary.get(key).unwrap().clone();
-                            state.operand_stack.push(item);
-                        }
                         op => {
-                            eprintln!("{:?} not implemented", op);
+                            return Err(Report::msg(format!("/undefined in {}", op)));
                         }
                     },
                     _ => unreachable!("b"),
                 }
             }
-            Rule::block => {}
+            Rule::block => {
+                let inner = item.into_inner();
+                let block = inner.as_str().to_string();
+                state.operand_stack.push(Item::Block(block));
+            }
             Rule::EOI => (),
             _ => unreachable!("a"),
         }
