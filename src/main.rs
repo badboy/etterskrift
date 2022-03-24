@@ -74,13 +74,7 @@ impl State {
 
 fn main() -> Result<()> {
     color_eyre::install()?;
-    let mut state = State {
-        operand_stack: Stack::new(),
-        dictionary: HashMap::new(),
-        dict_stack: Stack::new(),
-        block_stack: Stack::new(),
-        block_marks: 0,
-    };
+    let mut state = State::new();
 
     let args = env::args().skip(1).collect::<Vec<_>>();
     if args.len() == 1 {
