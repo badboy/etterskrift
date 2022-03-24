@@ -10,6 +10,6 @@ ident = @{ char+ }
 key = ${ "/" ~ ident }
 ops = { "[" | "]" }
 item = { (ident | key | number | ops) }
-block = { "{" ~ item+ ~ "}" }
+block = { "{" ~ (item | block)* ~ "}" }
 
 WHITESPACE = _{ " " | "\n"}
