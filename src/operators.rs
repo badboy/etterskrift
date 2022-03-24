@@ -56,6 +56,7 @@ pub fn operators() -> OperatorMap {
     // array
     m.insert("]".into(), operator!(array_close, 1));
     m.insert("length".into(), operator!(array_length, 1));
+    m.insert("forall".into(), operator!(array_forall, 2));
     m
 }
 
@@ -183,4 +184,15 @@ fn array_length(state: &mut State) {
     let len = array.len() as i32;
     let stack = &mut state.operand_stack;
     stack.push(len.into());
+}
+
+fn array_forall(state: &mut State) {
+    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
+    let array = state.operand_stack.pop().unwrap().as_array().to_vec();
+
+    for elem in array.into_iter() {
+        state.operand_stack.push(elem);
+        let map = operators();
+        super::execute(&proc, state, &map).expect("can't run block");
+    }
 }
