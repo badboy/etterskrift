@@ -1,6 +1,6 @@
 program = {
   SOI ~
-  (item | block)* ~
+  item* ~
   EOI
 }
 
@@ -8,8 +8,7 @@ char = _{ ASCII_ALPHA | "." | "_" | "-" }
 number = @{ ASCII_DIGIT+ }
 ident = @{ char+ }
 key = ${ "/" ~ ident }
-ops = { "[" | "]" }
+ops = { "[" | "]" | "{" | "}" }
 item = { (ident | key | number | ops) }
-block = { "{" ~ (item | block)* ~ "}" }
 
 WHITESPACE = _{ " " | "\n"}

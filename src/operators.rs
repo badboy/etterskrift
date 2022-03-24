@@ -251,16 +251,15 @@ fn array_close(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
     let found = (&stack.inner)
         .iter()
-        .rev()
-        .position(|item| matches!(item, Item::Mark));
+        .rposition(|item| matches!(item, Item::Mark));
 
     if found.is_none() {
         return Err(Report::msg("/unmatchedmark in --]--"));
     }
 
-    let pos = stack.len() - found.unwrap() - 1;
+    let pos = found.unwrap();
     let mut items: Vec<_> = stack.inner.drain(pos..).collect();
-    items.remove(0); // ArrayOpen
+    items.remove(0); // Mark
     stack.push(Item::Array(items));
     Ok(())
 }

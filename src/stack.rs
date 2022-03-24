@@ -109,11 +109,8 @@ impl From<HashMap<String, Item>> for Item {
     }
 }
 
-#[derive(Debug, PartialEq, Eq)]
-pub struct Stack<T>
-where
-    T: PartialEq + Eq,
-{
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct Stack<T> {
     pub(crate) inner: Vec<T>,
 }
 
@@ -137,5 +134,9 @@ where
 
     pub fn len(&self) -> usize {
         self.inner.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
     }
 }

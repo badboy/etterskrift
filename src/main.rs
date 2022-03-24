@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::{env, fs};
+use std::{env, fs, mem};
 
 use color_eyre::eyre::{Report, Result};
 use pest::Parser;
@@ -22,6 +22,14 @@ pub struct State {
     operand_stack: Stack<Item>,
     dictionary: HashMap<String, Item>,
     dict_stack: Stack<HashMap<String, Item>>,
+    block_stack: Stack<String>,
+    block_marks: usize,
+}
+
+impl Default for State {
+    fn default() -> State {
+        State::new()
+    }
 }
 
 impl State {
@@ -30,6 +38,8 @@ impl State {
             operand_stack: Stack::new(),
             dictionary: HashMap::new(),
             dict_stack: Stack::new(),
+            block_stack: Stack::new(),
+            block_marks: 0,
         }
     }
 
@@ -68,6 +78,8 @@ fn main() -> Result<()> {
         operand_stack: Stack::new(),
         dictionary: HashMap::new(),
         dict_stack: Stack::new(),
+        block_stack: Stack::new(),
+        block_marks: 0,
     };
 
     let args = env::args().skip(1).collect::<Vec<_>>();
@@ -83,7 +95,7 @@ fn main() -> Result<()> {
 
     let mut rl = Editor::<()>::new();
     loop {
-        let prompt = if state.operand_stack.len() == 0 {
+        let prompt = if state.operand_stack.is_empty() {
             "ES>".to_string()
         } else {
             format!("ES<{}>", state.operand_stack.len())
@@ -122,33 +134,81 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                 let inner = inner.next().unwrap();
                 match inner.as_rule() {
                     Rule::number => {
+                        if !state.block_stack.is_empty() {
+                            state.block_stack.push(inner.as_str().to_string());
+                            continue;
+                        }
+
                         let n = inner.as_str().parse().unwrap();
                         state.operand_stack.push(Item::Number(n));
                     }
                     Rule::key => {
+                        if !state.block_stack.is_empty() {
+                            state.block_stack.push(inner.as_str().to_string());
+                            continue;
+                        }
+
                         let key = inner.into_inner().next().unwrap().as_str();
                         state.operand_stack.push(key.to_string().into());
                     }
-                    Rule::ident => match inner.as_str() {
-                        key if state.contains_key(key) => {
-                            let item = state.get(key).unwrap().clone();
-                            if let Item::Block(block) = item {
-                                execute(&block, state, operators)?
-                            } else {
-                                state.operand_stack.push(item);
+                    Rule::ident => {
+                        if !state.block_stack.is_empty() {
+                            state.block_stack.push(inner.as_str().to_string());
+                            continue;
+                        }
+
+                        match inner.as_str() {
+                            key if state.contains_key(key) => {
+                                let item = state.get(key).unwrap().clone();
+                                if let Item::Block(block) = item {
+                                    execute(&block, state, operators)?
+                                } else {
+                                    state.operand_stack.push(item);
+                                }
+                            }
+                            op if operators.contains_key(op) => {
+                                let f = operators.get(op).unwrap();
+                                f(state)?;
+                            }
+                            op => {
+                                return Err(Report::msg(format!("/undefined in {}", op)));
                             }
                         }
-                        op if operators.contains_key(op) => {
-                            let f = operators.get(op).unwrap();
-                            f(state)?;
-                        }
-                        op => {
-                            return Err(Report::msg(format!("/undefined in {}", op)));
-                        }
-                    },
+                    }
                     Rule::ops => match inner.as_str() {
-                        "[" => state.operand_stack.push(Item::Mark),
+                        "{" => {
+                            state.block_stack.push("{".into());
+                            state.block_marks += 1;
+                        }
+                        "}" => {
+                            if state.block_stack.is_empty() {
+                                return Err(Report::msg("/syntaxerror in }"));
+                            }
+
+                            state.block_marks -= 1;
+                            if state.block_marks > 0 {
+                                state.block_stack.push(inner.as_str().to_string());
+                                continue;
+                            }
+
+                            let items = mem::take(&mut state.block_stack).inner;
+                            let code = items[1..].join(" ");
+                            state.operand_stack.push(Item::Block(code));
+                        }
+                        "[" => {
+                            if !state.block_stack.is_empty() {
+                                state.block_stack.push(inner.as_str().to_string());
+                                continue;
+                            }
+
+                            state.operand_stack.push(Item::Mark)
+                        }
                         "]" => {
+                            if !state.block_stack.is_empty() {
+                                state.block_stack.push(inner.as_str().to_string());
+                                continue;
+                            }
+
                             let f = operators.get("]").unwrap();
                             f(state)?;
                         }
@@ -157,15 +217,73 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                     _ => unreachable!("b"),
                 }
             }
-            Rule::block => {
-                let inner = item.into_inner();
-                let block = inner.as_str().to_string();
-                state.operand_stack.push(Item::Block(block));
-            }
             Rule::EOI => (),
             _ => unreachable!("a"),
         }
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn it_runs() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "1 1 add";
+        execute(code, &mut state, ops).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Number(2));
+        assert_eq!(expected, state);
+    }
+
+    #[test]
+    fn procs_only_run_on_exec() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "{ 1 1 add }";
+        execute(code, &mut state, ops).unwrap();
+
+        let top = state.operand_stack.pop().unwrap();
+        assert!(matches!(top, Item::Block(_)));
+        assert_eq!(0, state.operand_stack.len());
+
+        let code = "{ 1 1 add } exec";
+        execute(code, &mut state, ops).unwrap();
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Number(2));
+        assert_eq!(expected, state);
+    }
+
+    #[test]
+    fn procs_do_nest() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "{ 1 1 { add } exec }";
+        execute(code, &mut state, ops).unwrap();
+
+        let top = state.operand_stack.pop().unwrap();
+        assert!(matches!(top, Item::Block(_)));
+        assert_eq!(0, state.operand_stack.len());
+    }
+
+    #[test]
+    fn procs_do_nest_and_run() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "{ 1 1 { add } exec } exec";
+        execute(code, &mut state, ops).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Number(2));
+        assert_eq!(expected, state);
+    }
 }
