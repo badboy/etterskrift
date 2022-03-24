@@ -1,7 +1,8 @@
 use std::collections::hash_map::RandomState;
-use std::hash::{BuildHasher, Hasher};
 use std::collections::HashMap;
+use std::hash::{BuildHasher, Hasher};
 
+use super::stack::Item;
 use super::State;
 
 use color_eyre::eyre::{Report, Result};
@@ -48,7 +49,13 @@ pub fn operators() -> OperatorMap {
 
     // def
     m.insert("def".into(), operator!(def, 2));
+
+    // procs
     m.insert("exec".into(), operator!(exec, 1));
+
+    // array
+    m.insert("]".into(), operator!(array_close, 1));
+    m.insert("length".into(), operator!(array_length, 1));
     m
 }
 
@@ -150,4 +157,30 @@ fn exec(state: &mut State) {
     // FIXME: need operators.
     let map = HashMap::new();
     super::execute(code, state, &map).expect("can't run block");
+}
+
+fn array_close(state: &mut State) {
+    let stack = &mut state.operand_stack;
+    let found = (&stack.inner)
+        .into_iter()
+        .rev()
+        .position(|item| matches!(item, Item::ArrayOpen));
+
+    if found.is_none() {
+        eprintln!("Error: /unmatchedmark in --]--");
+        return;
+    }
+
+    let pos = stack.len() - found.unwrap() - 1;
+    let mut items: Vec<_> = stack.inner.drain(pos..).collect();
+    items.remove(0); // ArrayOpen
+    stack.push(Item::Array(items));
+}
+
+fn array_length(state: &mut State) {
+    let item = state.operand_stack.pop().unwrap();
+    let array = item.as_array();
+    let len = array.len() as i32;
+    let stack = &mut state.operand_stack;
+    stack.push(len.into());
 }

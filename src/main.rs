@@ -1,4 +1,4 @@
-use color_eyre::eyre::{Result, Report};
+use color_eyre::eyre::{Report, Result};
 use pest::Parser;
 use pest_derive::Parser;
 use rustyline::error::ReadlineError;
@@ -93,6 +93,14 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                         op => {
                             return Err(Report::msg(format!("/undefined in {}", op)));
                         }
+                    },
+                    Rule::ops => match inner.as_str() {
+                        "[" => state.operand_stack.push(Item::ArrayOpen),
+                        "]" => {
+                            let f = operators.get("]").unwrap();
+                            f(state)?;
+                        }
+                        _ => unreachable!("invalid ops"),
                     },
                     _ => unreachable!("b"),
                 }

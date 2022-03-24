@@ -8,7 +8,8 @@ char = _{ ASCII_ALPHA | "." | "_" | "-" }
 number = @{ ASCII_DIGIT+ }
 ident = @{ char+ }
 key = ${ "/" ~ ident }
-item = { (ident | key | number) }
+ops = { "[" | "]" }
+item = { (ident | key | number | ops) }
 block = { "{" ~ item+ ~ "}" }
 
 WHITESPACE = _{ " " | "\n"}

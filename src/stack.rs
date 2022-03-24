@@ -3,9 +3,10 @@ pub enum Item {
     Number(i32),
     Float(f32),
     //Dict(()),
-    //Array(Vec<i32>),
     Key(String),
     Block(String),
+    ArrayOpen,
+    Array(Vec<Item>),
 }
 
 impl Item {
@@ -38,6 +39,14 @@ impl Item {
             s
         } else {
             panic!("{:?} not a block", self);
+        }
+    }
+
+    pub fn as_array(&self) -> &[Item] {
+        if let Item::Array(a) = self {
+            a
+        } else {
+            panic!("{:?} not an array", self);
         }
     }
 }
