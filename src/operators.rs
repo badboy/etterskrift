@@ -2,10 +2,11 @@ use std::collections::hash_map::RandomState;
 use std::collections::HashMap;
 use std::hash::{BuildHasher, Hasher};
 
+use once_cell::sync::OnceCell;
+use color_eyre::eyre::{Report, Result};
+
 use super::stack::Item;
 use super::State;
-
-use color_eyre::eyre::{Report, Result};
 
 macro_rules! operator {
     ($name:ident, $arity:expr) => {{
@@ -23,52 +24,55 @@ macro_rules! operator {
     }};
 }
 
-pub type OperatorFn = dyn Fn(&mut State) -> Result<()>;
+pub type OperatorFn = dyn Fn(&mut State) -> Result<()> + Send + Sync;
 pub type OperatorMap = HashMap<String, Box<OperatorFn>>;
 
-pub fn operators() -> OperatorMap {
-    let mut m = HashMap::new();
+pub fn operators() -> &'static OperatorMap {
+    static OPERATORS: OnceCell<OperatorMap> = OnceCell::new();
+    OPERATORS.get_or_init(|| {
+        let mut m = HashMap::new();
 
-    // math
-    m.insert("add".into(), operator!(add, 2));
-    m.insert("sub".into(), operator!(sub, 2));
-    m.insert("mul".into(), operator!(mul, 2));
-    m.insert("div".into(), operator!(div, 2));
-    m.insert("neg".into(), operator!(neg, 1));
-    m.insert("sqrt".into(), operator!(sqrt, 1));
-    m.insert("rand".into(), operator!(rand, 0));
+        // math
+        m.insert("add".into(), operator!(add, 2));
+        m.insert("sub".into(), operator!(sub, 2));
+        m.insert("mul".into(), operator!(mul, 2));
+        m.insert("div".into(), operator!(div, 2));
+        m.insert("neg".into(), operator!(neg, 1));
+        m.insert("sqrt".into(), operator!(sqrt, 1));
+        m.insert("rand".into(), operator!(rand, 0));
 
-    // stack
-    m.insert("exch".into(), operator!(exch, 2));
-    m.insert("dup".into(), operator!(dup, 1));
-    m.insert("pop".into(), operator!(pop, 1));
-    m.insert("clear".into(), operator!(clear, 0));
-    m.insert("pstack".into(), operator!(pstack, 0));
-    m.insert("count".into(), operator!(count, 0));
-    m.insert("pdict".into(), operator!(pdict, 0));
+        // stack
+        m.insert("exch".into(), operator!(exch, 2));
+        m.insert("dup".into(), operator!(dup, 1));
+        m.insert("pop".into(), operator!(pop, 1));
+        m.insert("clear".into(), operator!(clear, 0));
+        m.insert("pstack".into(), operator!(pstack, 0));
+        m.insert("count".into(), operator!(count, 0));
+        m.insert("pdict".into(), operator!(pdict, 0));
 
-    // def
-    m.insert("def".into(), operator!(def, 2));
+        // def
+        m.insert("def".into(), operator!(def, 2));
 
-    // control
-    m.insert("exec".into(), operator!(exec, 1));
-    m.insert("repeat".into(), operator!(repeat, 2));
-    m.insert("for".into(), operator!(for_loop, 4));
-    m.insert("if".into(), operator!(if_cond, 2));
-    m.insert("ifelse".into(), operator!(ifelse_cond, 3));
+        // control
+        m.insert("exec".into(), operator!(exec, 1));
+        m.insert("repeat".into(), operator!(repeat, 2));
+        m.insert("for".into(), operator!(for_loop, 4));
+        m.insert("if".into(), operator!(if_cond, 2));
+        m.insert("ifelse".into(), operator!(ifelse_cond, 3));
 
-    // relational
-    m.insert("true".into(), operator!(bool_true, 0));
-    m.insert("false".into(), operator!(bool_false, 0));
-    m.insert("eq".into(), operator!(eq, 2));
-    m.insert("ne".into(), operator!(ne, 2));
+        // relational
+        m.insert("true".into(), operator!(bool_true, 0));
+        m.insert("false".into(), operator!(bool_false, 0));
+        m.insert("eq".into(), operator!(eq, 2));
+        m.insert("ne".into(), operator!(ne, 2));
 
-    // array
-    m.insert("]".into(), operator!(array_close, 1));
-    m.insert("length".into(), operator!(array_length, 1));
-    m.insert("forall".into(), operator!(array_forall, 2));
+        // array
+        m.insert("]".into(), operator!(array_close, 1));
+        m.insert("length".into(), operator!(array_length, 1));
+        m.insert("forall".into(), operator!(array_forall, 2));
 
-    m
+        m
+    })
 }
 
 fn add(state: &mut State) -> Result<()> {
@@ -186,9 +190,7 @@ fn def(state: &mut State) -> Result<()> {
 fn exec(state: &mut State) -> Result<()> {
     let code = state.operand_stack.pop()?.as_block()?.to_string();
 
-    // FIXME: need operators.
-    let map = HashMap::new();
-    super::execute(&code, state, &map)?;
+    super::execute(&code, state, operators())?;
     Ok(())
 }
 
@@ -196,10 +198,9 @@ fn repeat(state: &mut State) -> Result<()> {
     let proc = state.operand_stack.pop()?.as_block()?.to_string();
     let n = state.operand_stack.pop()?.as_int()?;
 
-    let map = operators();
     for i in 0..n {
         state.operand_stack.push(i.into());
-        super::execute(&proc, state, &map)?;
+        super::execute(&proc, state, operators())?;
     }
     Ok(())
 }
@@ -210,10 +211,9 @@ fn for_loop(state: &mut State) -> Result<()> {
     let inc = state.operand_stack.pop()?.as_int()?;
     let init = state.operand_stack.pop()?.as_int()?;
 
-    let map = operators();
     for i in (init..=limit).step_by(inc as usize) {
         state.operand_stack.push(i.into());
-        super::execute(&proc, state, &map)?;
+        super::execute(&proc, state, operators())?;
     }
     Ok(())
 }
@@ -223,8 +223,7 @@ fn if_cond(state: &mut State) -> Result<()> {
     let cond = state.operand_stack.pop()?.as_bool()?;
 
     if cond {
-        let map = operators();
-        super::execute(&proc, state, &map)?;
+        super::execute(&proc, state, operators())?;
     }
     Ok(())
 }
@@ -234,11 +233,10 @@ fn ifelse_cond(state: &mut State) -> Result<()> {
     let proc1 = state.operand_stack.pop()?.as_block()?.to_string();
     let cond = state.operand_stack.pop()?.as_bool()?;
 
-    let map = operators();
     if cond {
-        super::execute(&proc1, state, &map)?;
+        super::execute(&proc1, state, operators())?;
     } else {
-        super::execute(&proc2, state, &map)?;
+        super::execute(&proc2, state, operators())?;
     }
     Ok(())
 }
@@ -274,10 +272,9 @@ fn array_forall(state: &mut State) -> Result<()> {
     let proc = state.operand_stack.pop()?.as_block()?.to_string();
     let array = state.operand_stack.pop()?.as_array()?.to_vec();
 
-    let map = operators();
     for elem in array.into_iter() {
         state.operand_stack.push(elem);
-        super::execute(&proc, state, &map).expect("can't run block");
+        super::execute(&proc, state, operators()).expect("can't run block");
     }
     Ok(())
 }

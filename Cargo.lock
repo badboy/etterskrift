@@ -199,6 +199,7 @@ name = "etterskrift"
 version = "0.1.0"
 dependencies = [
  "color-eyre",
+ "once_cell",
  "pest",
  "pest_derive",
  "rustyline",
