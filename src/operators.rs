@@ -376,6 +376,48 @@ mod test {
         assert_eq!(state, expected);
     }
 
+
+    #[test]
+    fn div_divides_the_top_two_most_elements() {
+        let mut state = State::new();
+        state.operand_stack.push(4.into());
+        state.operand_stack.push(2.into());
+
+        div(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(2.0.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn neg_negates_the_top_element() {
+        let mut state = State::new();
+        state.operand_stack.push(1.into());
+
+        neg(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push((-1).into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn sqrt_takes_the_square_root_of_the_top_element() {
+        let mut state = State::new();
+        state.operand_stack.push(4.into());
+
+        sqrt(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(2.0.into());
+
+        assert_eq!(state, expected);
+    }
+
+
     #[test]
     fn exch_exchanges_the_two_top_most_elements() {
         let mut state = State::new();
