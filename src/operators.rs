@@ -389,7 +389,6 @@ mod test {
         assert_eq!(state, expected);
     }
 
-
     #[test]
     fn div_divides_the_top_two_most_elements() {
         let mut state = State::new();
@@ -441,6 +440,50 @@ mod test {
         let mut expected = State::new();
         expected.operand_stack.push(2.into());
         expected.operand_stack.push(1.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn dup_duplicates_the_top_most_element() {
+        let mut state = State::new();
+        state.operand_stack.push(1.into());
+
+        dup(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(1.into());
+        expected.operand_stack.push(1.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn pop_removes_the_top_element() {
+        let mut state = State::new();
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.into());
+
+        pop(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(1.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn clear_removes_all_elements() {
+        let mut state = State::new();
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.into());
+        state.operand_stack.push(3.into());
+        state.operand_stack.push(4.into());
+        state.operand_stack.push(5.into());
+
+        clear(&mut state).unwrap();
+
+        let expected = State::new();
 
         assert_eq!(state, expected);
     }
