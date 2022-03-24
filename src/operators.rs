@@ -43,6 +43,7 @@ pub fn operators() -> OperatorMap {
     m.insert("exch".into(), operator!(exch, 2));
     m.insert("dup".into(), operator!(dup, 1));
     m.insert("pop".into(), operator!(pop, 1));
+    m.insert("clear".into(), operator!(clear, 0));
     m.insert("pstack".into(), operator!(pstack, 0));
     m.insert("count".into(), operator!(count, 0));
     m.insert("pdict".into(), operator!(pdict, 0));
@@ -52,6 +53,8 @@ pub fn operators() -> OperatorMap {
 
     // procs
     m.insert("exec".into(), operator!(exec, 1));
+    m.insert("repeat".into(), operator!(repeat, 2));
+    m.insert("for".into(), operator!(for_loop, 4));
 
     // array
     m.insert("]".into(), operator!(array_close, 1));
@@ -124,6 +127,11 @@ fn pop(state: &mut State) {
     let _a = stack.pop();
 }
 
+fn clear(state: &mut State) {
+    let stack = &mut state.operand_stack;
+    stack.inner.clear();
+}
+
 fn pstack(state: &mut State) {
     let stack = &state.operand_stack.inner;
     for x in stack.iter().rev() {
@@ -160,6 +168,30 @@ fn exec(state: &mut State) {
     super::execute(code, state, &map).expect("can't run block");
 }
 
+fn repeat(state: &mut State) {
+    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
+    let n = state.operand_stack.pop().unwrap().as_int();
+
+    let map = operators();
+    for i in 0..n {
+        state.operand_stack.push(i.into());
+        super::execute(&proc, state, &map).expect("can't run block");
+    }
+}
+
+fn for_loop(state: &mut State) {
+    let proc = state.operand_stack.pop().unwrap().as_block().to_string();
+    let limit = state.operand_stack.pop().unwrap().as_int();
+    let inc = state.operand_stack.pop().unwrap().as_int();
+    let init = state.operand_stack.pop().unwrap().as_int();
+
+    let map = operators();
+    for i in (init..=limit).step_by(inc as usize) {
+        state.operand_stack.push(i.into());
+        super::execute(&proc, state, &map).expect("can't run block");
+    }
+}
+
 fn array_close(state: &mut State) {
     let stack = &mut state.operand_stack;
     let found = (&stack.inner)
@@ -190,9 +222,9 @@ fn array_forall(state: &mut State) {
     let proc = state.operand_stack.pop().unwrap().as_block().to_string();
     let array = state.operand_stack.pop().unwrap().as_array().to_vec();
 
+    let map = operators();
     for elem in array.into_iter() {
         state.operand_stack.push(elem);
-        let map = operators();
         super::execute(&proc, state, &map).expect("can't run block");
     }
 }
