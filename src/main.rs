@@ -100,6 +100,7 @@ fn main() -> Result<()> {
                 continue;
             }
             Ok(line) => {
+                rl.add_history_entry(line.as_str());
                 if let Err(e) = execute(&line, &mut state, operators::operators()) {
                     eprintln!("Error: {}", e);
                 }
