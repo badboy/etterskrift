@@ -110,8 +110,7 @@ impl From<HashMap<String, Item>> for Item {
 }
 
 #[derive(Debug, Default, PartialEq, Eq)]
-pub struct Stack<T>
-{
+pub struct Stack<T> {
     pub(crate) inner: Vec<T>,
 }
 
