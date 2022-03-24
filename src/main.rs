@@ -17,6 +17,7 @@ mod stack;
 use operators::OperatorMap;
 use stack::{Item, Stack};
 
+#[derive(Debug, PartialEq, Eq)]
 pub struct State {
     operand_stack: Stack<Item>,
     dictionary: HashMap<String, Item>,
@@ -24,6 +25,14 @@ pub struct State {
 }
 
 impl State {
+    pub fn new() -> Self {
+        Self {
+            operand_stack: Stack::new(),
+            dictionary: HashMap::new(),
+            dict_stack: Stack::new(),
+        }
+    }
+
     fn contains_key(&self, key: &str) -> bool {
         if self.dictionary.contains_key(key) {
             return true;

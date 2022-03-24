@@ -19,6 +19,8 @@ pub enum Item {
     Array(Vec<Item>),
 }
 
+impl Eq for Item {}
+
 impl Item {
     pub fn as_int(&self) -> Result<i32> {
         if let &Item::Number(i) = self {
@@ -107,11 +109,18 @@ impl From<HashMap<String, Item>> for Item {
     }
 }
 
-pub struct Stack<T> {
+#[derive(Debug, PartialEq, Eq)]
+pub struct Stack<T>
+where
+    T: PartialEq + Eq,
+{
     pub(crate) inner: Vec<T>,
 }
 
-impl<T> Stack<T> {
+impl<T> Stack<T>
+where
+    T: PartialEq + Eq,
+{
     pub fn new() -> Self {
         Stack { inner: vec![] }
     }

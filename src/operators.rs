@@ -330,3 +330,65 @@ fn dict_end(state: &mut State) -> Result<()> {
     let _olddict = mem::replace(&mut state.dictionary, newdict);
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn add_adds_the_two_top_most_elements() {
+        let mut state = State::new();
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.into());
+
+        add(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(3.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn sub_subtracts_the_two_top_most_elements() {
+        let mut state = State::new();
+        state.operand_stack.push(3.into());
+        state.operand_stack.push(1.into());
+
+        sub(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(2.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn mul_multiplies_the_two_top_most_elements() {
+        let mut state = State::new();
+        state.operand_stack.push(2.into());
+        state.operand_stack.push(3.into());
+
+        mul(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(6.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn exch_exchanges_the_two_top_most_elements() {
+        let mut state = State::new();
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.into());
+
+        exch(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(2.into());
+        expected.operand_stack.push(1.into());
+
+        assert_eq!(state, expected);
+    }
+}
