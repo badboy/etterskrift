@@ -19,9 +19,9 @@ impl Item {
     }
 
     pub fn as_float(&self) -> f32 {
-        match self {
-            &Item::Number(i) => i as f32,
-            &Item::Float(f) => f,
+        match *self {
+            Item::Number(i) => i as f32,
+            Item::Float(f) => f,
             _ => panic!("{:?} not a float", self),
         }
     }

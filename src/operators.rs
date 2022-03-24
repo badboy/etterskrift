@@ -126,7 +126,7 @@ fn pop(state: &mut State) {
 
 fn pstack(state: &mut State) {
     let stack = &state.operand_stack.inner;
-    for x in stack.into_iter().rev() {
+    for x in stack.iter().rev() {
         println!("{:?}", x);
     }
 }
@@ -163,7 +163,7 @@ fn exec(state: &mut State) {
 fn array_close(state: &mut State) {
     let stack = &mut state.operand_stack;
     let found = (&stack.inner)
-        .into_iter()
+        .iter()
         .rev()
         .position(|item| matches!(item, Item::ArrayOpen));
 

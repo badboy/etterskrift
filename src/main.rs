@@ -32,7 +32,7 @@ fn main() -> Result<()> {
     let mut rl = Editor::<()>::new();
     loop {
         let prompt = if state.operand_stack.len() == 0 {
-            format!("ES>")
+            "ES>".to_string()
         } else {
             format!("ES<{}>", state.operand_stack.len())
         };
