@@ -218,3 +218,66 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
 
     Ok(())
 }
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn it_runs() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "1 1 add";
+        execute(code, &mut state, ops).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Number(2));
+        assert_eq!(expected, state);
+    }
+
+    #[test]
+    fn procs_only_run_on_exec() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "{ 1 1 add }";
+        execute(code, &mut state, ops).unwrap();
+
+        let top = state.operand_stack.pop().unwrap();
+        assert!(matches!(top, Item::Block(_)));
+        assert_eq!(0, state.operand_stack.len());
+
+        let code = "{ 1 1 add } exec";
+        execute(code, &mut state, ops).unwrap();
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Number(2));
+        assert_eq!(expected, state);
+    }
+
+    #[test]
+    fn procs_do_nest() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "{ 1 1 { add } exec }";
+        execute(code, &mut state, ops).unwrap();
+
+        let top = state.operand_stack.pop().unwrap();
+        assert!(matches!(top, Item::Block(_)));
+        assert_eq!(0, state.operand_stack.len());
+    }
+
+    #[test]
+    fn procs_do_nest_and_run() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "{ 1 1 { add } exec } exec";
+        execute(code, &mut state, ops).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Number(2));
+        assert_eq!(expected, state);
+    }
+}
