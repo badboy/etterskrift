@@ -489,6 +489,119 @@ mod test {
     }
 
     #[test]
+    fn count_puts_the_number_of_elements_on_stack() {
+        let mut state = State::new();
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.0.into());
+
+        count(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(1.into());
+        expected.operand_stack.push(2.0.into());
+        expected.operand_stack.push(2.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn def_creates_a_binding_in_the_current_dictionary() {
+        let mut state = State::new();
+        state.operand_stack.push(Item::Key("foo".to_string()));
+        state.operand_stack.push(1.into());
+
+        def(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.dictionary.insert("foo".to_string(), 1.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn bool_true_pushes_true_onto_the_stack() {
+        let mut state = State::new();
+
+        bool_true(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(true.into());
+
+        assert_eq!(state, expected);
+    }
+
+
+    #[test]
+    fn bool_false_pushes_false_onto_the_stack() {
+        let mut state = State::new();
+
+        bool_false(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(false.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn eq_pushes_true_on_the_stack_when_the_top_most_items_are_equal() {
+        let mut state = State::new();
+        state.operand_stack.inner.push(1.into());
+        state.operand_stack.inner.push(1.into());
+
+        eq(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(true.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn eq_pushes_false_on_the_stack_when_the_top_most_items_are_not_equal() {
+        let mut state = State::new();
+        state.operand_stack.inner.push(1.into());
+        state.operand_stack.inner.push(2.into());
+
+        eq(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(false.into());
+
+        assert_eq!(state, expected);
+    }
+
+
+    #[test]
+    fn ne_pushes_true_on_the_stack_when_the_top_most_items_are_not_equal() {
+        let mut state = State::new();
+        state.operand_stack.inner.push(1.into());
+        state.operand_stack.inner.push(2.into());
+
+        ne(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(true.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn ne_pushes_false_on_the_stack_when_the_top_most_items_are_equal() {
+        let mut state = State::new();
+        state.operand_stack.inner.push(1.into());
+        state.operand_stack.inner.push(1.into());
+
+        ne(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(false.into());
+
+        assert_eq!(state, expected);
+    }
+
+
+    #[test]
     fn convert_int_to_int() {
         let mut state = State::new();
         state.operand_stack.push(2.into());
