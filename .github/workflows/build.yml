@@ -48,6 +48,3 @@ jobs:
 
     - name: Clippy
       run: cargo clippy --all --all-targets --all-features
-
-    - name: Docs
-      run: cargo doc
