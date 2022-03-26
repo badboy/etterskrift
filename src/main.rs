@@ -196,7 +196,8 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                                 continue;
                             }
 
-                            state.operand_stack.push(Item::Mark)
+                            let f = operators.get("[").unwrap();
+                            f(state)?;
                         }
                         "]" => {
                             if !state.block_stack.is_empty() {

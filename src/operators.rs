@@ -68,6 +68,7 @@ pub fn operators() -> &'static OperatorMap {
         m.insert("ne", operator!(ne, 2));
 
         // array
+        m.insert("[", operator!(mark, 0));
         m.insert("]", operator!(array_close, 1));
         m.insert("length", operator!(array_length, 1));
         m.insert("forall", operator!(array_forall, 2));
@@ -247,6 +248,11 @@ fn ifelse_cond(state: &mut State) -> Result<()> {
     } else {
         super::execute(&proc2, state, operators())?;
     }
+    Ok(())
+}
+
+fn mark(state: &mut State) -> Result<()> {
+    state.operand_stack.push(Item::Mark);
     Ok(())
 }
 
