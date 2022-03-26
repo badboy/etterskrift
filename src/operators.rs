@@ -530,7 +530,6 @@ mod test {
         assert_eq!(state, expected);
     }
 
-
     #[test]
     fn bool_false_pushes_false_onto_the_stack() {
         let mut state = State::new();
@@ -571,7 +570,6 @@ mod test {
         assert_eq!(state, expected);
     }
 
-
     #[test]
     fn ne_pushes_true_on_the_stack_when_the_top_most_items_are_not_equal() {
         let mut state = State::new();
@@ -599,7 +597,6 @@ mod test {
 
         assert_eq!(state, expected);
     }
-
 
     #[test]
     fn convert_int_to_int() {
