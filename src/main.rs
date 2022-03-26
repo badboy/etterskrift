@@ -146,6 +146,25 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
 
                         return Err(Report::msg(format!("/invalidnumber in {}", inner.as_str())));
                     }
+                    Rule::radixnumber => {
+                        let code = inner.as_str();
+                        let pos = code.find('#').expect("no # found");
+                        let radix = code[0..pos].parse().unwrap();
+                        if !(2..=36).contains(&radix) {
+                            return Err(Report::msg(format!("/undefined in {}", inner.as_str())));
+                        }
+                        let number = match i32::from_str_radix(&code[pos + 1..], radix) {
+                            Ok(number) => number,
+                            Err(_) => {
+                                return Err(Report::msg(format!(
+                                    "/undefined in {}",
+                                    inner.as_str()
+                                )))
+                            }
+                        };
+
+                        state.operand_stack.push(Item::Number(number));
+                    }
                     Rule::key => {
                         if !state.block_stack.is_empty() {
                             state.block_stack.push(inner.as_str().to_string());
@@ -304,6 +323,20 @@ mod test {
         expected.operand_stack.push(Item::Float(1.5));
         expected.operand_stack.push(Item::Float(0.5));
         expected.operand_stack.push(Item::Float(-0.7));
+        assert_eq!(expected, state);
+    }
+
+    #[test]
+    fn parses_with_radix() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "16#FF 4#3";
+        execute(code, &mut state, ops).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Number(255));
+        expected.operand_stack.push(Item::Number(3));
         assert_eq!(expected, state);
     }
 }

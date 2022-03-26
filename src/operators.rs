@@ -107,8 +107,8 @@ fn mul(state: &mut State) -> Result<()> {
     let b = stack.pop()?;
 
     if let (Ok(a), Ok(b)) = (a.as_int(), b.as_int()) {
-            stack.push((a * b).into());
-            return Ok(());
+        stack.push((a * b).into());
+        return Ok(());
     }
 
     if let (Ok(a), Ok(b)) = (a.as_float(), b.as_float()) {

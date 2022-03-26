@@ -7,10 +7,11 @@ program = {
 char = _{ ASCII_ALPHA | "." | "_" | "-" }
 float = @{ integer ~ "." ~ integer}
 integer = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
+radixnumber = @{ ASCII_DIGIT ~ (ASCII_DIGIT)? ~ "#" ~ ASCII_ALPHANUMERIC+ }
 number = { float | integer }
 ident = @{ ASCII_ALPHA ~ char* }
 key = ${ "/" ~ ident }
 ops = { "[" | "]" | "{" | "}" }
-item = { (ident | key | number | ops) }
+item = { (ident | key | radixnumber | number | ops) }
 
 WHITESPACE = _{ " " | "\n"}
