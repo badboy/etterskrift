@@ -17,6 +17,18 @@ mod stack;
 use operators::OperatorMap;
 use stack::{Item, Stack};
 
+macro_rules! bail {
+    ($msg:literal $(,)?) => {
+        return Err(Report::msg($msg));
+    };
+    ($msg:expr $(,)?) => {
+        return Err(Report::msg($msg));
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        return Err(Report::msg(format!($fmt, $($arg)*)));
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct State {
     operand_stack: Stack<Item>,
@@ -144,22 +156,22 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                             continue;
                         }
 
-                        return Err(Report::msg(format!("/invalidnumber in {}", inner.as_str())));
+                        bail!("/invalidnumber in {}", inner.as_str());
                     }
                     Rule::radixnumber => {
                         let code = inner.as_str();
                         let pos = code.find('#').expect("no # found");
                         let radix = code[0..pos].parse().unwrap();
                         if !(2..=36).contains(&radix) {
-                            return Err(Report::msg(format!("/undefined in {}", inner.as_str())));
+                            bail!("/undefined in {}", inner.as_str());
                         }
                         let number = match i32::from_str_radix(&code[pos + 1..], radix) {
                             Ok(number) => number,
                             Err(_) => {
-                                return Err(Report::msg(format!(
+                                bail!(
                                     "/undefined in {}",
                                     inner.as_str()
-                                )))
+                                );
                             }
                         };
 
@@ -194,7 +206,7 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                                 f(state)?;
                             }
                             op => {
-                                return Err(Report::msg(format!("/undefined in {}", op)));
+                                bail!("/undefined in {}", op);
                             }
                         }
                     }
@@ -205,7 +217,7 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                         }
                         "}" => {
                             if state.block_stack.is_empty() {
-                                return Err(Report::msg("/syntaxerror in }"));
+                                bail!("/syntaxerror in }");
                             }
 
                             state.block_marks -= 1;
