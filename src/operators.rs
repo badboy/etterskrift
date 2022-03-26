@@ -103,9 +103,26 @@ fn sub(state: &mut State) -> Result<()> {
 
 fn mul(state: &mut State) -> Result<()> {
     let stack = &mut state.operand_stack;
-    let res = stack.pop()?.as_int()? * stack.pop()?.as_int()?;
-    stack.push(res.into());
-    Ok(())
+    let a = stack.pop()?;
+    let b = stack.pop()?;
+
+    match (a.as_int(), b.as_int()) {
+        (Ok(a), Ok(b)) => {
+            stack.push((a * b).into());
+            return Ok(());
+        }
+        _ => {}
+    }
+
+    match (a.as_float(), b.as_float()) {
+        (Ok(a), Ok(b)) => {
+            stack.push((a * b).into());
+            return Ok(());
+        }
+        _ => {}
+    }
+
+    Err(Report::msg("/typecheck in --mul--"))
 }
 
 fn div(state: &mut State) -> Result<()> {
@@ -393,6 +410,44 @@ mod test {
         expected.operand_stack.push(6.into());
 
         assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn mul_handles_floats() {
+        let mut state = State::new();
+        state.operand_stack.push(0.5.into());
+        state.operand_stack.push(2.0.into());
+
+        mul(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(1.0.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    fn mul_handles_mixed_numbers() {
+        let mut state = State::new();
+        state.operand_stack.push(0.5.into());
+        state.operand_stack.push(2.into());
+
+        mul(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(1.0.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
+    #[should_panic(expected = "typecheck")]
+    fn mul_fails_typecheck() {
+        let mut state = State::new();
+        state.operand_stack.push("a".to_string().into());
+        state.operand_stack.push("b".to_string().into());
+
+        mul(&mut state).unwrap();
     }
 
     #[test]
