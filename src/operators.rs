@@ -106,20 +106,14 @@ fn mul(state: &mut State) -> Result<()> {
     let a = stack.pop()?;
     let b = stack.pop()?;
 
-    match (a.as_int(), b.as_int()) {
-        (Ok(a), Ok(b)) => {
+    if let (Ok(a), Ok(b)) = (a.as_int(), b.as_int()) {
             stack.push((a * b).into());
             return Ok(());
-        }
-        _ => {}
     }
 
-    match (a.as_float(), b.as_float()) {
-        (Ok(a), Ok(b)) => {
-            stack.push((a * b).into());
-            return Ok(());
-        }
-        _ => {}
+    if let (Ok(a), Ok(b)) = (a.as_float(), b.as_float()) {
+        stack.push((a * b).into());
+        return Ok(());
     }
 
     Err(Report::msg("/typecheck in --mul--"))
