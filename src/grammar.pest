@@ -5,8 +5,10 @@ program = {
 }
 
 char = _{ ASCII_ALPHA | "." | "_" | "-" }
-number = @{ ASCII_DIGIT+ }
-ident = @{ char+ }
+float = @{ integer ~ "." ~ integer}
+integer = @{ ("+" | "-")? ~ ASCII_DIGIT+ }
+number = { float | integer }
+ident = @{ ASCII_ALPHA ~ char* }
 key = ${ "/" ~ ident }
 ops = { "[" | "]" | "{" | "}" }
 item = { (ident | key | number | ops) }

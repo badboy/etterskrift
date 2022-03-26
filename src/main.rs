@@ -134,8 +134,17 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                             continue;
                         }
 
-                        let n = inner.as_str().parse().unwrap();
-                        state.operand_stack.push(Item::Number(n));
+                        if let Ok(n) = inner.as_str().parse() {
+                            state.operand_stack.push(Item::Number(n));
+                            continue;
+                        }
+
+                        if let Ok(n) = inner.as_str().parse::<f32>() {
+                            state.operand_stack.push(Item::Float(n));
+                            continue;
+                        }
+
+                        return Err(Report::msg(format!("/invalidnumber in {}", inner.as_str())));
                     }
                     Rule::key => {
                         if !state.block_stack.is_empty() {
@@ -280,6 +289,21 @@ mod test {
 
         let mut expected = State::new();
         expected.operand_stack.push(Item::Number(2));
+        assert_eq!(expected, state);
+    }
+
+    #[test]
+    fn parses_float() {
+        let mut state = State::new();
+
+        let ops = operators::operators();
+        let code = "1.5 +0.5 -0.7";
+        execute(code, &mut state, ops).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(Item::Float(1.5));
+        expected.operand_stack.push(Item::Float(0.5));
+        expected.operand_stack.push(Item::Float(-0.7));
         assert_eq!(expected, state);
     }
 }
