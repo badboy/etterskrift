@@ -26,6 +26,7 @@ jobs:
         toolchain: stable
         profile: minimal
         override: true
+    - uses: Swatinem/rust-cache@v1
     - run: cargo test --all
 
   check_fmt_and_docs:
