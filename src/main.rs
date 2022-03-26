@@ -168,10 +168,7 @@ fn execute(code: &str, state: &mut State, operators: &OperatorMap) -> Result<()>
                         let number = match i32::from_str_radix(&code[pos + 1..], radix) {
                             Ok(number) => number,
                             Err(_) => {
-                                bail!(
-                                    "/undefined in {}",
-                                    inner.as_str()
-                                );
+                                bail!("/undefined in {}", inner.as_str());
                             }
                         };
 
