@@ -600,8 +600,8 @@ mod test {
     #[test]
     fn eq_pushes_true_on_the_stack_when_the_top_most_items_are_equal() {
         let mut state = State::new();
-        state.operand_stack.inner.push(1.into());
-        state.operand_stack.inner.push(1.into());
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(1.into());
 
         eq(&mut state).unwrap();
 
@@ -614,8 +614,8 @@ mod test {
     #[test]
     fn eq_pushes_false_on_the_stack_when_the_top_most_items_are_not_equal() {
         let mut state = State::new();
-        state.operand_stack.inner.push(1.into());
-        state.operand_stack.inner.push(2.into());
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.into());
 
         eq(&mut state).unwrap();
 
@@ -628,8 +628,8 @@ mod test {
     #[test]
     fn ne_pushes_true_on_the_stack_when_the_top_most_items_are_not_equal() {
         let mut state = State::new();
-        state.operand_stack.inner.push(1.into());
-        state.operand_stack.inner.push(2.into());
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.into());
 
         ne(&mut state).unwrap();
 
@@ -642,8 +642,8 @@ mod test {
     #[test]
     fn ne_pushes_false_on_the_stack_when_the_top_most_items_are_equal() {
         let mut state = State::new();
-        state.operand_stack.inner.push(1.into());
-        state.operand_stack.inner.push(1.into());
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(1.into());
 
         ne(&mut state).unwrap();
 
@@ -656,9 +656,9 @@ mod test {
     #[test]
     fn mark_and_unmark_pushes_an_array_on_the_stack() {
         let mut state = State::new();
-        state.operand_stack.inner.push(Item::Mark);
-        state.operand_stack.inner.push(1.into());
-        state.operand_stack.inner.push(2.into());
+        state.operand_stack.push(Item::Mark);
+        state.operand_stack.push(1.into());
+        state.operand_stack.push(2.into());
 
         array_close(&mut state).unwrap();
 
