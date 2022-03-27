@@ -670,6 +670,20 @@ mod test {
     }
 
     #[test]
+    fn lenght_pushes_the_length_of_an_array_on_the_stack() {
+        let mut state = State::new();
+        let content = vec![1.into(), 2.into(), 3.into()];
+        state.operand_stack.push(content.into());
+
+        array_length(&mut state).unwrap();
+
+        let mut expected = State::new();
+        expected.operand_stack.push(3.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
     fn convert_int_to_int() {
         let mut state = State::new();
         state.operand_stack.push(2.into());
