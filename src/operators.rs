@@ -654,6 +654,22 @@ mod test {
     }
 
     #[test]
+    fn mark_and_unmark_pushes_an_array_on_the_stack() {
+        let mut state = State::new();
+        state.operand_stack.inner.push(Item::Mark);
+        state.operand_stack.inner.push(1.into());
+        state.operand_stack.inner.push(2.into());
+
+        array_close(&mut state).unwrap();
+
+        let mut expected = State::new();
+        let content = vec![1.into(), 2.into()];
+        expected.operand_stack.push(content.into());
+
+        assert_eq!(state, expected);
+    }
+
+    #[test]
     fn convert_int_to_int() {
         let mut state = State::new();
         state.operand_stack.push(2.into());

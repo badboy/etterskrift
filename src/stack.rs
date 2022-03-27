@@ -109,6 +109,12 @@ impl From<HashMap<String, Item>> for Item {
     }
 }
 
+impl From<Vec<Item>> for Item {
+    fn from(val: Vec<Item>) -> Self {
+        Item::Array(val)
+    }
+}
+
 #[derive(Debug, Default, PartialEq, Eq)]
 pub struct Stack<T> {
     pub(crate) inner: Vec<T>,
